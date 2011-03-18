@@ -23,7 +23,6 @@ import java.util.List;
 import javax.enterprise.context.spi.CreationalContext;
 import javax.enterprise.inject.spi.BeanManager;
 
-import org.jboss.seam.config.xml.model.ValueXmlItem;
 import org.jboss.seam.solder.properties.Property;
 
 /**
@@ -38,16 +37,12 @@ public class ArrayFieldSet implements FieldValueObject
    final private List<FieldValue> values;
    final private Class<?> arrayType;
 
-   public ArrayFieldSet(Property<Object> field, List<ValueXmlItem> items)
+   public ArrayFieldSet(Property<Object> field, List<FieldValue> items)
    {
       this.field = field;
       this.values = new ArrayList<FieldValue>();
       arrayType = field.getJavaClass().getComponentType();
-      for (ValueXmlItem i : items)
-      {
-         values.add(i.getValue());
-      }
-
+      values.addAll(items);
    }
 
    public void setValue(Object instance, CreationalContext<?> ctx, BeanManager manager)

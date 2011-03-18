@@ -30,6 +30,7 @@ import org.jboss.seam.config.xml.model.ParameterXmlItem;
 import org.jboss.seam.config.xml.model.ParametersXmlItem;
 import org.jboss.seam.config.xml.model.ReplacesXmlItem;
 import org.jboss.seam.config.xml.model.ValueXmlItem;
+import org.jboss.seam.config.xml.model.ValuesXmlItem;
 import org.jboss.seam.config.xml.model.XmlItem;
 import org.jboss.seam.config.xml.model.XmlItemType;
 import org.jboss.seam.config.xml.parser.SaxNode;
@@ -60,6 +61,10 @@ public class RootNamespaceElementResolver implements NamespaceElementResolver
       if (item.equals(XmlItemType.VALUE.getElementName()) || item.equals(XmlItemType.VALUE.getAlias()))
       {
          return new ValueXmlItem(parent, node.getInnerText(), node.getDocument(), node.getLineNo());
+      }
+      if (item.equals(XmlItemType.VALUES.getElementName()))
+      {
+          return new ValuesXmlItem(parent, node.getDocument(), node.getLineNo());
       }
       else if (item.equals(XmlItemType.KEY.getElementName()) || item.equals(XmlItemType.KEY.getAlias()))
       {

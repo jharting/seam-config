@@ -84,6 +84,7 @@ public class PropertyXmlItem extends AbstractXmlItem
          fieldValue = new SimpleFieldValue(parent.getJavaClass(), property, fv, fieldType);
       }
       allowed.add(new TypeOccuranceInformation(XmlItemType.VALUE, null, null));
+      allowed.add(new TypeOccuranceInformation(XmlItemType.VALUES, null, 1));
       allowed.add(new TypeOccuranceInformation(XmlItemType.ANNOTATION, null, null));
       allowed.add(new TypeOccuranceInformation(XmlItemType.ENTRY, null, null));
    }
@@ -98,6 +99,8 @@ public class PropertyXmlItem extends AbstractXmlItem
    {
       List<EntryXmlItem> mapEntries = new ArrayList<EntryXmlItem>();
       List<ValueXmlItem> valueEntries = new ArrayList<ValueXmlItem>();
+      ValuesXmlItem valuesEntry = null;
+      
       if (fieldValue == null)
       {
          for (XmlItem i : children)
@@ -106,6 +109,10 @@ public class PropertyXmlItem extends AbstractXmlItem
             {
                valueEntries.add((ValueXmlItem) i);
             }
+            else if (i.getType() == XmlItemType.VALUES)
+            {
+                valuesEntry = (ValuesXmlItem) i;
+            }
             else if (i.getType() == XmlItemType.ENTRY)
             {
                mapEntries.add((EntryXmlItem) i);
@@ -113,13 +120,17 @@ public class PropertyXmlItem extends AbstractXmlItem
 
          }
       }
-      if (!mapEntries.isEmpty() || !valueEntries.isEmpty())
+      if (!mapEntries.isEmpty() || !valueEntries.isEmpty() || valuesEntry != null)
       {
          if (Map.class.isAssignableFrom(getFieldType()))
          {
             if (!valueEntries.isEmpty())
             {
                throw new XmlConfigurationException("Map fields cannot have <value> elements as children,only <entry> elements Field:" + getDeclaringClass().getName() + '.' + getFieldName(), getDocument(), getLineno());
+            }
+            if (valuesEntry != null)
+            {
+                throw new XmlConfigurationException("Map fields cannot have <values> element as a child, only <entry> elements Field:" + getDeclaringClass().getName() + '.' + getFieldName(), getDocument(), getLineno());
             }
             if (!mapEntries.isEmpty())
             {
@@ -139,7 +150,7 @@ public class PropertyXmlItem extends AbstractXmlItem
             {
                throw new XmlConfigurationException("Collection fields must be set using <value> not <entry> Field:" + getDeclaringClass().getName() + '.' + getFieldName(), getDocument(), getLineno());
             }
-            if (!valueEntries.isEmpty())
+            if (!valueEntries.isEmpty() || valuesEntry != null)
             {
                for (ValueXmlItem value : valueEntries)
                {
@@ -150,13 +161,31 @@ public class PropertyXmlItem extends AbstractXmlItem
                      inlineBeans.add(result);
                   }
                }
+               if (valuesEntry != null)
+               {
+                   inlineBeans.addAll(valuesEntry.getBeanResults(manager));
+               }
+               
+               /*
+                * Prepare values for the collection / array by aggregating contents of <value> and <values> elements.
+                */
+               List<FieldValue> collectionValues = new ArrayList<FieldValue>();
+               for (ValueXmlItem value : valueEntries)
+               {
+                   collectionValues.add(value.getValue());
+               }
+               if (valuesEntry != null)
+               {
+                   collectionValues.addAll(valuesEntry.getValues());
+               }
+                   
                if (getFieldType().isArray())
                {
-                  fieldValue = new ArrayFieldSet(property, valueEntries);
+                  fieldValue = new ArrayFieldSet(property, collectionValues);
                }
                else
                {
-                  fieldValue = new CollectionFieldSet(property, valueEntries);
+                  fieldValue = new CollectionFieldSet(property, collectionValues);
                }
             }
          }
@@ -169,6 +198,10 @@ public class PropertyXmlItem extends AbstractXmlItem
             if (valueEntries.size() != 1)
             {
                throw new XmlConfigurationException("Non collection fields can only have a single <value> element Field:" + getDeclaringClass().getName() + '.' + getFieldName(), getDocument(), getLineno());
+            }
+            if (valuesEntry != null)
+            {
+                throw new XmlConfigurationException("Non collection fields cannot use <values> element Field:" + getDeclaringClass().getName() + '.' + getFieldName(), getDocument(), getLineno());
             }
             ValueXmlItem value = valueEntries.get(0);
             BeanResult<?> result = value.getBeanResult(manager);

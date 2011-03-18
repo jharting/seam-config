@@ -31,7 +31,6 @@ import java.util.TreeSet;
 import javax.enterprise.context.spi.CreationalContext;
 import javax.enterprise.inject.spi.BeanManager;
 
-import org.jboss.seam.config.xml.model.ValueXmlItem;
 import org.jboss.seam.config.xml.util.TypeReader;
 import org.jboss.seam.solder.properties.Property;
 
@@ -51,7 +50,7 @@ public class CollectionFieldSet implements FieldValueObject
    private final Class<?> elementType;
    private final Class<? extends Collection> collectionType;
 
-   public CollectionFieldSet(Property<Object> field, List<ValueXmlItem> items)
+   public CollectionFieldSet(Property<Object> field, List<FieldValue> items)
    {
       this.field = field;
       this.values = new ArrayList<FieldValue>();
@@ -108,10 +107,7 @@ public class CollectionFieldSet implements FieldValueObject
          throw new RuntimeException("Could not determine element type for " + field.getDeclaringClass().getName() + "." + field.getName());
       }
 
-      for (ValueXmlItem i : items)
-      {
-         values.add(i.getValue());
-      }
+      values.addAll(items);
    }
 
    public void setValue(Object instance, CreationalContext<?> ctx, BeanManager manager)

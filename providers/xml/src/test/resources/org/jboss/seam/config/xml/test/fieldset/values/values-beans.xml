@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="urn:java:ee" xmlns:test="urn:java:org.jboss.seam.config.xml.test.fieldset.values">
+    <test:Foo>
+        <replaces />
+        <test:setOfBars>
+            <values>
+                <test:Bar name="Alpha" />
+                <test:Bar name="Bravo" />
+                <test:Bar name="Charlie" />
+            </values>
+        </test:setOfBars>
+        <test:arrayOfBars>
+            <values>
+                <test:Bar name="Delta" />
+                <test:Bar name="Echo" />
+                <test:Bar name="Foxtrot" />
+            </values>
+        </test:arrayOfBars>
+    </test:Foo>
+
+</beans>
