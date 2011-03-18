@@ -16,6 +16,10 @@
  */
 package org.jboss.seam.config.xml.test.fieldset;
 
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
 import junit.framework.Assert;
 
 import org.jboss.seam.config.xml.test.AbstractXMLTest;
@@ -38,5 +42,35 @@ public class InlineBeanFieldValueBeanTest extends AbstractXMLTest
       Assert.assertTrue(knight.getHorse().getShoe() != null);
       Assert.assertTrue(knight.getHorse().getName().equals("billy"));
    }
-
+   
+   @Test
+   public void testInlineCollectionWithoutValueElements()
+   {
+       @SuppressWarnings("serial")
+       Map<String, String> expectedValues = new HashMap<String, String>()
+       {
+           {
+               put("Ace", "sharp");
+               put("Apples", "blunt");
+               put("Polly", "blunt");
+           }
+       };
+       
+       Cavalry cavalry = getReference(Cavalry.class);
+       validateKnights(expectedValues, cavalry.getKnights());
+   }
+   
+   private void validateKnights(Map<String, String> expectedValues, List<Knight> knights)
+   {
+       Assert.assertEquals(expectedValues.size(), knights.size());
+       for (Knight knight : knights)
+       {
+           String expectedSwordType = expectedValues.get(knight.getHorse().getName());
+           if (expectedSwordType != null && expectedSwordType.equals(knight.getSword().getType()))
+           {
+               expectedValues.remove(knight.getHorse().getName());
+           }
+       }
+       Assert.assertTrue(expectedValues.isEmpty());
+   }
 }

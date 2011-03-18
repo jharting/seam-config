@@ -38,6 +38,8 @@ import org.jboss.seam.config.xml.fieldset.ConstantFieldValue;
 import org.jboss.seam.config.xml.fieldset.ELFieldValue;
 import org.jboss.seam.config.xml.fieldset.FieldValue;
 import org.jboss.seam.config.xml.fieldset.FieldValueObject;
+import org.jboss.seam.config.xml.fieldset.InlineBeanFactory;
+import org.jboss.seam.config.xml.fieldset.InlineBeanFieldValue;
 import org.jboss.seam.config.xml.fieldset.MapFieldSet;
 import org.jboss.seam.config.xml.fieldset.SimpleFieldValue;
 import org.jboss.seam.config.xml.util.TypeOccuranceInformation;
@@ -86,6 +88,7 @@ public class PropertyXmlItem extends AbstractXmlItem
       allowed.add(new TypeOccuranceInformation(XmlItemType.VALUE, null, null));
       allowed.add(new TypeOccuranceInformation(XmlItemType.ANNOTATION, null, null));
       allowed.add(new TypeOccuranceInformation(XmlItemType.ENTRY, null, null));
+      allowed.add(new TypeOccuranceInformation(XmlItemType.CLASS, null, null));
    }
 
    public FieldValueObject getFieldValue()
@@ -98,6 +101,8 @@ public class PropertyXmlItem extends AbstractXmlItem
    {
       List<EntryXmlItem> mapEntries = new ArrayList<EntryXmlItem>();
       List<ValueXmlItem> valueEntries = new ArrayList<ValueXmlItem>();
+      List<ClassXmlItem> classEntries = new ArrayList<ClassXmlItem>();
+      
       if (fieldValue == null)
       {
          for (XmlItem i : children)
@@ -110,16 +115,20 @@ public class PropertyXmlItem extends AbstractXmlItem
             {
                mapEntries.add((EntryXmlItem) i);
             }
+            else if (i.getType() == XmlItemType.CLASS)
+            {
+                classEntries.add((ClassXmlItem) i);
+            }
 
          }
       }
-      if (!mapEntries.isEmpty() || !valueEntries.isEmpty())
+      if (!mapEntries.isEmpty() || !valueEntries.isEmpty() || !classEntries.isEmpty())
       {
          if (Map.class.isAssignableFrom(getFieldType()))
          {
-            if (!valueEntries.isEmpty())
+            if (!valueEntries.isEmpty() || !classEntries.isEmpty())
             {
-               throw new XmlConfigurationException("Map fields cannot have <value> elements as children,only <entry> elements Field:" + getDeclaringClass().getName() + '.' + getFieldName(), getDocument(), getLineno());
+               throw new XmlConfigurationException("Map fields can only contain <entry> elements Field:" + getDeclaringClass().getName() + '.' + getFieldName(), getDocument(), getLineno());
             }
             if (!mapEntries.isEmpty())
             {
@@ -135,6 +144,8 @@ public class PropertyXmlItem extends AbstractXmlItem
          }
          else if (Collection.class.isAssignableFrom(getFieldType()) || getFieldType().isArray())
          {
+            List<FieldValue> fieldValues = new ArrayList<FieldValue>();
+             
             if (!mapEntries.isEmpty())
             {
                throw new XmlConfigurationException("Collection fields must be set using <value> not <entry> Field:" + getDeclaringClass().getName() + '.' + getFieldName(), getDocument(), getLineno());
@@ -149,15 +160,25 @@ public class PropertyXmlItem extends AbstractXmlItem
                   {
                      inlineBeans.add(result);
                   }
+                  fieldValues.add(value.getValue());
                }
-               if (getFieldType().isArray())
-               {
-                  fieldValue = new ArrayFieldSet(property, valueEntries);
-               }
-               else
-               {
-                  fieldValue = new CollectionFieldSet(property, valueEntries);
-               }
+            }
+            if (!classEntries.isEmpty())
+            {
+                for (ClassXmlItem item : classEntries)
+                {
+                    int inlineBeanId = InlineBeanFactory.applySyntheticQualifierToInlineBean(item, manager);
+                    inlineBeans.add(item.createBeanResult(manager));
+                    fieldValues.add(new InlineBeanFieldValue(inlineBeanId));
+                }
+            }
+            if (getFieldType().isArray())
+            {
+               fieldValue = new ArrayFieldSet(property, fieldValues);
+            }
+            else
+            {
+               fieldValue = new CollectionFieldSet(property, fieldValues);
             }
          }
          else
@@ -166,16 +187,32 @@ public class PropertyXmlItem extends AbstractXmlItem
             {
                throw new XmlConfigurationException("Only Map fields can be set using <entry> Field:" + getDeclaringClass().getName() + '.' + getFieldName(), getDocument(), getLineno());
             }
-            if (valueEntries.size() != 1)
+            if (!(valueEntries.size() == 1 ^ classEntries.size() == 1))
             {
-               throw new XmlConfigurationException("Non collection fields can only have a single <value> element Field:" + getDeclaringClass().getName() + '.' + getFieldName(), getDocument(), getLineno());
+               throw new XmlConfigurationException("Non collection fields can have at most a single <value> element Field:" + getDeclaringClass().getName() + '.' + getFieldName(), getDocument(), getLineno());
             }
-            ValueXmlItem value = valueEntries.get(0);
-            BeanResult<?> result = value.getBeanResult(manager);
-            fieldValue = new SimpleFieldValue(parent.getJavaClass(), property, value.getValue(), fieldType);
-            if (result != null)
+            
+            FieldValue fieldValue = null;
+            BeanResult<?> beanResult = null;
+            
+            if (valueEntries.size() == 1)
             {
-               inlineBeans.add(result);
+                ValueXmlItem value = valueEntries.get(0);
+                beanResult = value.getBeanResult(manager);
+                fieldValue = value.getValue();
+            }
+            else
+            {
+                ClassXmlItem classItem = classEntries.get(0);
+                int inlineBeanId = InlineBeanFactory.applySyntheticQualifierToInlineBean(classItem, manager);
+                beanResult = classItem.createBeanResult(manager);
+                fieldValue = new InlineBeanFieldValue(inlineBeanId);
+            }
+            
+            this.fieldValue = new SimpleFieldValue(parent.getJavaClass(), property, fieldValue, fieldType);
+            if (beanResult != null)
+            {
+               inlineBeans.add(beanResult);
             }
          }
       }

@@ -21,18 +21,15 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import javax.enterprise.context.Dependent;
 import javax.enterprise.inject.spi.BeanManager;
 
 import org.jboss.seam.config.xml.core.BeanResult;
 import org.jboss.seam.config.xml.fieldset.ConstantFieldValue;
 import org.jboss.seam.config.xml.fieldset.ELFieldValue;
 import org.jboss.seam.config.xml.fieldset.FieldValue;
+import org.jboss.seam.config.xml.fieldset.InlineBeanFactory;
 import org.jboss.seam.config.xml.fieldset.InlineBeanFieldValue;
-import org.jboss.seam.config.xml.fieldset.InlineBeanIdCreator;
-import org.jboss.seam.config.xml.fieldset.InlineBeanQualifier;
 import org.jboss.seam.config.xml.util.TypeOccuranceInformation;
-import org.jboss.seam.config.xml.util.XmlConfigurationException;
 
 public abstract class AbstractValueXmlItem extends AbstractXmlItem
 {
@@ -56,21 +53,7 @@ public abstract class AbstractValueXmlItem extends AbstractXmlItem
       if (!inlineBeans.isEmpty())
       {
          ClassXmlItem inline = inlineBeans.get(0);
-         for (AnnotationXmlItem i : inline.getChildrenOfType(AnnotationXmlItem.class))
-         {
-            Class annotation = (Class) i.getJavaClass();
-            if (manager.isQualifier(annotation))
-            {
-               throw new XmlConfigurationException("Cannot define qualifiers on inline beans, Qualifier: " + annotation.getName(), i.getDocument(), i.getLineno());
-            }
-            else if (manager.isScope(annotation) && annotation != Dependent.class)
-            {
-               throw new XmlConfigurationException("Inline beans must have @Dependent scope, Scope: " + annotation.getName(), i.getDocument(), i.getLineno());
-            }
-         }
-         syntheticQualifierId = InlineBeanIdCreator.getId();
-         AnnotationXmlItem syntheticQualifier = new AnnotationXmlItem(this, InlineBeanQualifier.class, "" + syntheticQualifierId, Collections.EMPTY_MAP, getDocument(), getLineno());
-         inline.addChild(syntheticQualifier);
+         syntheticQualifierId = InlineBeanFactory.applySyntheticQualifierToInlineBean(inline, manager);
          inlineBean = inline.createBeanResult(manager);
          return inlineBean;
       }

@@ -51,7 +51,7 @@ public class CollectionFieldSet implements FieldValueObject
    private final Class<?> elementType;
    private final Class<? extends Collection> collectionType;
 
-   public CollectionFieldSet(Property<Object> field, List<ValueXmlItem> items)
+   public CollectionFieldSet(Property<Object> field, List<FieldValue> values)
    {
       this.field = field;
       this.values = new ArrayList<FieldValue>();
@@ -108,10 +108,7 @@ public class CollectionFieldSet implements FieldValueObject
          throw new RuntimeException("Could not determine element type for " + field.getDeclaringClass().getName() + "." + field.getName());
       }
 
-      for (ValueXmlItem i : items)
-      {
-         values.add(i.getValue());
-      }
+      this.values.addAll(values);
    }
 
    public void setValue(Object instance, CreationalContext<?> ctx, BeanManager manager)

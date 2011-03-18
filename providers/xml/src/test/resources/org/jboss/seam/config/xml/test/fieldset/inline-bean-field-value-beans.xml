@@ -1,28 +1,57 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<beans xmlns="urn:java:ee"
-          xmlns:test="urn:java:org.jboss.seam.config.xml.test.fieldset">
+<beans xmlns="urn:java:ee" xmlns:test="urn:java:org.jboss.seam.config.xml.test.fieldset">
 
     <test:Knight>
-    
-      <test:sword>
-         <value>
-            <test:Sword type="sharp"/>
-         </value>
-      </test:sword>
-      
-      <test:horse>
-         <value>
-	         <test:Horse>
-	            <test:name>
-	               <value>billy</value>
-	            </test:name>
-	            <test:shoe>
-	               <Inject/>
-	            </test:shoe>
-	         </test:Horse>
-         </value>
-      </test:horse>
-      
+
+        <test:sword>
+            <value>
+                <test:Sword type="sharp" />
+            </value>
+        </test:sword>
+
+        <test:horse>
+            <value>
+                <test:Horse>
+                    <test:name>
+                        <value>billy</value>
+                    </test:name>
+                    <test:shoe>
+                        <Inject />
+                    </test:shoe>
+                </test:Horse>
+            </value>
+        </test:horse>
+
     </test:Knight>
+
+    <test:Cavalry>
+        <test:knights>
+            <test:Knight>
+                <test:horse>
+                    <test:Horse name="Ace" />
+                </test:horse>
+                <test:sword>
+                    <test:Sword type="sharp" />
+                </test:sword>
+            </test:Knight>
+            <test:Knight>
+                <test:horse>
+                    <test:Horse name="Apples" />
+                </test:horse>
+                <test:sword>
+                    <test:Sword type="blunt" />
+                </test:sword>
+            </test:Knight>
+            <test:Knight>
+                <test:horse>
+                    <test:Horse name="Polly" />
+                </test:horse>
+                <test:sword>
+                    <test:Sword type="blunt" />
+                </test:sword>
+            </test:Knight>
+        </test:knights>
+    </test:Cavalry>
+
 
 </beans>
